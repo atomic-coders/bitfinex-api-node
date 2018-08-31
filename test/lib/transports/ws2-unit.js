@@ -1424,6 +1424,7 @@ describe('WSv2 packet watch-dog', () => {
 
     setTimeout(() => {
       clearInterval(sendInterval)
+      clearTimeout(ws._packetWDTimeout)
       done()
     }, 200)
   })
@@ -1477,5 +1478,87 @@ describe('WSv2 message sending', () => {
     }
 
     ws.send({ a: 42 })
+  })
+})
+
+describe('WSv2 seq audit: _validateMessageSeq', () => {
+  it('returns an error on invalid pub seq', () => {
+    const ws = new WSv2()
+
+    ws._seqAudit = true
+    ws._lastPubSeq = 0
+
+    assert.equal(ws._validateMessageSeq([243, [252.12, 2, -1], 1]), null)
+    assert.equal(ws._validateMessageSeq([243, [252.12, 2, -1], 2]), null)
+
+    const err = ws._validateMessageSeq([243, [252.12, 2, -1], 5])
+    assert(err instanceof Error)
+  })
+
+  it('returns an error on invalid auth seq', () => {
+    const ws = new WSv2()
+
+    ws._seqAudit = true
+    ws._lastPubSeq = 0
+    ws._lastAuthSeq = 0
+
+    assert.equal(ws._validateMessageSeq([0, [252.12, 2, -1], 1, 1]), null)
+    assert.equal(ws._validateMessageSeq([0, [252.12, 2, -1], 2, 2]), null)
+
+    const err = ws._validateMessageSeq([0, [252.12, 2, -1], 3, 5])
+    assert(err instanceof Error)
+  })
+
+  it('ignores heartbeats', () => {
+    const ws = new WSv2()
+
+    ws._seqAudit = true
+    ws._lastPubSeq = 0
+
+    assert.equal(ws._validateMessageSeq([243, [252.12, 2, -1], 1]), null)
+    assert.equal(ws._validateMessageSeq([243, [252.12, 2, -1], 2]), null)
+    assert.equal(ws._validateMessageSeq([243, 'hb']), null)
+    assert.equal(ws._validateMessageSeq([243, 'hb']), null)
+    assert.equal(ws._validateMessageSeq([243, [252.12, 2, -1], 3]), null)
+    assert.equal(ws._validateMessageSeq([243, [252.12, 2, -1], 4]), null)
+  })
+
+  it('skips auth seq for error notifications', () => {
+    const ws = new WSv2()
+
+    ws._seqAudit = true
+    ws._lastPubSeq = 0
+    ws._lastAuthSeq = 0
+
+    const nSuccess = [null, null, null, null, null, null, 'SUCCESS']
+    const nError = [null, null, null, null, null, null, 'ERROR']
+
+    assert.equal(ws._validateMessageSeq([0, 'n', nSuccess, 1, 1]), null)
+    assert.equal(ws._validateMessageSeq([0, 'n', nSuccess, 2, 2]), null)
+    assert.equal(ws._validateMessageSeq([0, 'n', nError, 3]), null)
+    assert.equal(ws._validateMessageSeq([0, 'n', nSuccess, 4, 3]), null)
+    assert.equal(ws._validateMessageSeq([0, 'n', nSuccess, 5, 4]), null)
+  })
+})
+
+describe('_handleTradeMessage', () => {
+  it('correctly forwards payloads w/ seq numbers', (done) => {
+    const ws = new WSv2()
+    const payload = [
+      [286614318, 1535531325604, 0.05, 7073.51178714],
+      [286614249, 1535531321436, 0.0215938, 7073.6],
+      [286614248, 1535531321430, 0.0284062, 7073.51178714]
+    ]
+    const msg = [1710, payload, 1]
+
+    ws.onTrades({ pair: 'tBTCUSD' }, (data) => {
+      assert.deepStrictEqual(data, payload)
+      done()
+    })
+
+    ws._handleTradeMessage(msg, {
+      channel: 'trades',
+      pair: 'tBTCUSD'
+    })
   })
 })
