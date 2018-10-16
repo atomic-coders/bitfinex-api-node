@@ -58,7 +58,7 @@
     "standard": "^10.0.2"
   },
   "dependencies": {
-    "bfx-api-node-rest": "git+https://github.com/atomic-coders/bfx-api-node-rest",
+    "bfx-api-node-rest": "^1.0.0",
     "bfx-api-node-util": "^1.0.0",
     "bfx-api-node-ws1": "^1.0.0",
     "bfx-api-node-models": "^1.0.0",
