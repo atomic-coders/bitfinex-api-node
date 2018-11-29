@@ -8,4 +8,5 @@ source/images
 todo
 package-lock.json
 .env
+dist/
 *.iml
