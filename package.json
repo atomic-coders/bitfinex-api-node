@@ -1,6 +1,6 @@
 {
   "name": "bitfinex-api-node",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Node reference library for Bitfinex API",
   "engines": {
     "node": ">=7"
@@ -63,7 +63,7 @@
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-regenerator": "^6.26.0",
     "babel-preset-env": "^1.7.0",
-    "bfx-api-node-models": "^1.0.0",
+    "bfx-api-node-models": "^1.0.6",
     "bfx-api-node-rest": "git+https://github.com/atomic-coders/bfx-api-node-rest",
     "bfx-api-node-util": "^1.0.0",
     "bfx-api-node-ws1": "^1.0.0",
